@@ -21,7 +21,16 @@ body {
   align-items: center;
   justify-content: space-between;
 }
-
+footer {
+    background: #141414;
+    width: 100vw !important;
+}
+p {
+    display: flex;
+    justify-content: center;
+    z-index: 1;
+    color: #fff;
+}
 #chat_container {
   flex: 1;
   width: 100%;
