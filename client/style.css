@@ -128,7 +128,7 @@ form {
   padding: 10px;
   background: #1a1a1a;
   border-radius: 15px;
-
+  margin-bottom: 10px;
   display: flex;
   flex-direction: row;
   gap: 10px;
