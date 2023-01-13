@@ -82,6 +82,7 @@ body {
 
 .profile img {
   width: 60%;
+  background-image: url(https://i.imgur.com/TGtZ1Qh.jpg);
   height: 60%;
   object-fit: contain;
 }
