@@ -1,63 +1,45 @@
-import express from 'express';
-import dotenv from 'dotenv';
-import cors from 'cors';
-import { Configuration, OpenAIApi } from 'openai';
+import os
+import openai
+from flask import Flask, request, jsonify
 
-dotenv.config();
+app = Flask(__name__)
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+start_sequence = "\nAI:"
+restart_sequence = "\nHuman: "
 
-const openai = new OpenAIApi(configuration);
+@app.route('/', methods=['GET'])
+def hello():
+    return jsonify({'message': 'Hello from CodeX!'})
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+@app.route('/', methods=['POST'])
+def chat():
+    try:
+        prompt = request.json['prompt']
+        conversation_context = request.json.get('context')
+        
+        if conversation_context:
+            prompt = conversation_context + restart_sequence + prompt
+        
+        response = openai.Completion.create(
+            model="text-davinci-003",
+            prompt=prompt,
+            temperature=0.9,
+            max_tokens=3000,
+            top_p=1,
+            frequency_penalty=0.5,
+            presence_penalty=0,
+            stop=[" Human:", " AI:"]
+        )
+        
+        choices = response.choices[0]
+        conversation_context = choices['context'] if 'context' in choices else None
+        bot_response = choices['text']
+        
+        return jsonify({'bot': bot_response, 'context': conversation_context})
+    except Exception as e:
+        print(e)
+        return jsonify({'error': 'Something went wrong'}), 500
 
-app.get('/', async (req, res) => {
-  res.status(200).send({
-    message: 'Hello from CodeX!'
-  });
-});
-
-let conversationContext = null;
-app.post('/', async (req, res) => {
-  try {
-    const prompt = req.body.prompt;
-    let response;
-    if (conversationContext) {
-      response = await openai.complete({
-        model: "text-davinci-003",
-        prompt: `${prompt}`,
-        temperature: 0,
-        context: conversationContext,
-        max_tokens: 3000,
-        top_p: 1,
-        frequency_penalty: 0.5,
-        presence_penalty: 0,
-        stop: ["user:", "bot:"]
-      });
-    } else {
-      response = await openai.complete({
-        model: "text-davinci-003",
-        prompt: `${prompt}`,
-        temperature: 0,
-        max_tokens: 3000,
-        top_p: 1,
-        frequency_penalty: 0.5,
-        presence_penalty: 0,
-        stop: ["user:", "bot:"]
-      });
-    }
-    conversationContext = response.choices[0].context;
-    res.status(200).send({
-      bot: response.choices[0].text
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send(error || 'Something went wrong');
-  }
-});
-
-app.listen(5000, () => console.log('AI server started on http://localhost:5000'));
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
